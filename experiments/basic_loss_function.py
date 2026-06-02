@@ -22,7 +22,7 @@ def loss(scores, Y, delta):
     L = []
     for i in range(len(scores)):
         L.append(loss_per_case(scores[i], Y[i], delta))
-    return L
+    return sum(L) / len(L)
 
 
 if __name__ == "__main__":
