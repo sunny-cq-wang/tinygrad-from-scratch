@@ -43,6 +43,11 @@ if __name__ == "__main__":
 
     c = time.time()
     res2 = np.matmul(X, W.T)
+    # X: N x D
+    # W: K x D
+    # W.t: D x K
+    # X x W.T => (N x D) x (D x K) = N x K
+    # scores: N x K
     d = time.time()
 
     print(f"Manual time: {b - a}, Numpy time: {d - c}")
