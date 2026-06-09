@@ -1,24 +1,20 @@
 import numpy as np
 
 
-def compute_gradient_per_case(W, x, score, y, delta=1):
+def compute_gradient_per_case(x, score, y):
     """
-    param W: K x D
     param x: 1 x D
     param score: 1 x K
     param y: correct class
     """
-    L_i = np.zeros(W.shape[0]) # 1 x K
-    for i in range(W.shape[0]):
-        if i == y: continue
-        if score[i] - score[y] + delta > 0:
-            L_i[i] = 1
-    L_i[y] = -np.sum(L_i)
-
-    return np.outer(L_i, x)
+    f = score - np.max(score)
+    exp_f = np.exp(f)
+    probability = exp_f / np.sum(exp_f)
+    probability[y] -= 1
+    return np.outer(probability, x)
 
 
-def compute_gradient(W, X, Y, delta=1, lambd=0):
+def compute_gradient(W, X, Y, lambd=0):
     """
     param W: K x D
     param X: N x D
@@ -28,7 +24,7 @@ def compute_gradient(W, X, Y, delta=1, lambd=0):
 
     gradient = np.zeros_like(W)
     for i in range(scores.shape[0]):
-        gradient += compute_gradient_per_case(W, X[i], scores[i], Y[i], delta)
+        gradient += compute_gradient_per_case(X[i], scores[i], Y[i])
     return gradient / X.shape[0] + lambd * W
 
 
