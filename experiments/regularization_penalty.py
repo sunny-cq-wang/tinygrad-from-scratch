@@ -12,4 +12,3 @@ if __name__ == "__main__":
     ])
 
     print(reg_pen_L2(matrix, 1))
-

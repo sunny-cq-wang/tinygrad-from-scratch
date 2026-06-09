@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def loss_per_case(score, y, delta):
+def loss_per_case(score, y, delta=1):
     """
     score: f(x, W, b) --- 1 x K
     y:      the slot at which the score of the correct label in f(x, W, b) is located
