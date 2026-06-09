@@ -286,31 +286,6 @@ $\Rightarrow$ classification accuracy of 21.4%
 
 ### Page 9
 
-$$\begin{bmatrix}
-L_1 \\ L_2 \\ L_3 \\ \vdots \\ L_N
-\end{bmatrix}
-\qquad
-[p_1, p_2 \dots p_D] = K
-\begin{bmatrix}
-p_{1,1} & p_{2,1} & \dots & p_{D,1} \\
-p_{1,2} &  &  & \vdots \\
-\vdots &  & \ddots & \vdots \\
-p_{1,K} &  & \dots & p_{D,K}
-\end{bmatrix}
-\qquad
-\begin{bmatrix}
-1 & 2 \\
-3 & 4
-\end{bmatrix}
-\begin{bmatrix}
-1 & 2 & 0 \\
-4 & 5 & 6
-\end{bmatrix}
-= \begin{bmatrix}
-9 & 12 & 15 \\
-\vdots & & \vdots
-\end{bmatrix}$$
-
 * computing gradient analytically with Calculus
 ↳ can be more error prone forces implementing
 $\Rightarrow$ gradient check: compare analytic gradient vs numerical gradient for correctness
