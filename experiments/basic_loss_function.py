@@ -24,7 +24,7 @@ def loss(scores, Y, delta):
     L = np.zeros(scores.shape[0])
     for i in range(scores.shape[0]):
         L[i] = loss_per_case(scores[i], Y[i], delta)
-    return np.sum(L) / len(scores)
+    return np.sum(L) / len(scores)\
 
 
 if __name__ == "__main__":
