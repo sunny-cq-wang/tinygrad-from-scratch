@@ -32,12 +32,13 @@ class Tensor:
         return result
 
     def __mul__(self, other):
-        assert isinstance(other, (int, float))
+        other = other if isinstance(other, Tensor) else Tensor(other)
 
-        result = Tensor(data=self.data * other, _children=(self,))
+        result = Tensor(data=self.data * other.data, _children=(self, other))
 
         def _backward():
-            self.grad += other * result.grad
+            self.grad += unbroadcast(other.data * result.grad, self.data.shape)
+            other.grad += unbroadcast(self.data * result.grad, other.data.shape)
         result._backward = _backward
 
         return result
@@ -50,6 +51,44 @@ class Tensor:
         def _backward():
             self.grad += result.grad @ other.data.swapaxes(-1, -2)
             other.grad += self.data.swapaxes(-1, -2) @ result.grad
+        result._backward = _backward
+
+        return result
+
+    def __pow__(self, other):
+        assert isinstance(other, (int, float))
+
+        result = Tensor(data=self.data ** other, _children=(self,))
+
+        def _backward():
+            self.grad += result.grad * (other * self.data ** (other - 1))
+        result._backward = _backward
+
+        return result
+
+    def sum(self):
+        result = Tensor(data=self.data.sum(), _children=(self,))
+
+        def _backward():
+            self.grad += result.grad * np.ones_like(self.data)
+        result._backward = _backward
+
+        return result
+
+    def exp(self):
+        result = Tensor(data=np.exp(self.data), _children=(self,))
+
+        def _backward():
+            self.grad += result.grad * np.exp(self.data)
+        result._backward = _backward
+
+        return result
+
+    def log(self):
+        result = Tensor(data=np.log(self.data), _children=(self,))
+
+        def _backward():
+            self.grad += result.grad * (1 / self.data)
         result._backward = _backward
 
         return result
