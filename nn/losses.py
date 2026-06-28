@@ -14,6 +14,13 @@ def mse_loss(pred, target):
     return mean
 
 
+def to_one_hot(y, num_classes=10):
+    batch_size = y.shape[0]
+    one_hot = np.zeros((batch_size, num_classes))
+    one_hot[np.arange(batch_size), y] = 1
+    return one_hot
+
+
 def softmax_cross_entropy(logits, target):
     target = target if isinstance(target, Tensor) else Tensor(target)
 

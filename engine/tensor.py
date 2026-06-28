@@ -102,6 +102,16 @@ class Tensor:
 
         return result
 
+    @property
+    def T(self):
+        result = Tensor(data=self.data.T, _children=(self,))
+
+        def _backward():
+            self.grad += result.grad.T
+        result._backward = _backward
+
+        return result
+
     def backward(self):
 
         topo_order = []
