@@ -13,8 +13,8 @@ def unbroadcast(grad, original_shape):
 
 class Tensor:
     def __init__(self, data, _children=()):
-        self.data = data
-        self.grad = np.zeros_like(data)
+        self.data = np.asarray(data, dtype=np.float64)
+        self.grad = np.zeros_like(data, dtype=np.float64)
 
         self._backward = lambda: None
         self._prev = set(_children)
@@ -49,8 +49,8 @@ class Tensor:
         result = Tensor(data=self.data @ other.data, _children=(self, other))
 
         def _backward():
-            self.grad += result.grad @ other.data.swapaxes(-1, -2)
-            other.grad += self.data.swapaxes(-1, -2) @ result.grad
+            self.grad += unbroadcast(result.grad @ other.data.swapaxes(-1, -2), self.data.shape)
+            other.grad += unbroadcast(self.data.swapaxes(-1, -2) @ result.grad, other.data.shape)
         result._backward = _backward
 
         return result
@@ -62,15 +62,6 @@ class Tensor:
 
         def _backward():
             self.grad += result.grad * (other * self.data ** (other - 1))
-        result._backward = _backward
-
-        return result
-
-    def sum(self):
-        result = Tensor(data=self.data.sum(), _children=(self,))
-
-        def _backward():
-            self.grad += result.grad * np.ones_like(self.data)
         result._backward = _backward
 
         return result
@@ -111,6 +102,66 @@ class Tensor:
         result._backward = _backward
 
         return result
+
+    def reshape(self, *shape):
+        result = Tensor(data=self.data.reshape(*shape), _children=(self,))
+
+        def _backward():
+            self.grad += result.grad.reshape(self.data.shape)
+
+        result._backward = _backward
+
+        return result
+
+    def transpose(self, *axes):
+        axes = axes[0] if len(axes) == 1 and isinstance(axes[0], (tuple, list)) else axes
+        result = Tensor(data=self.data.transpose(*axes), _children=(self,))
+
+        def _backward():
+            inv_axes = np.argsort(axes)
+            self.grad += result.grad.transpose(*inv_axes)
+
+        result._backward = _backward
+
+        return result
+
+    def sum(self, axis=None, keepdims=False):
+        result = Tensor(data=self.data.sum(axis=axis, keepdims=keepdims), _children=(self,))
+
+        def _backward():
+            grad = result.grad
+            if not keepdims and axis is not None:
+                grad = np.expand_dims(grad, axis)
+            self.grad += grad * np.ones_like(self.data)
+
+        result._backward = _backward
+
+        return result
+
+    def max(self, axis=None, keepdims=False):
+        data = self.data.max(axis=axis, keepdims=True)
+        mask = (self.data == data).astype(self.data.dtype)
+        mask /= mask.sum(axis=axis, keepdims=True)  # split grad if there's a tie
+
+        out_data = data if keepdims else np.squeeze(data, axis=axis)
+        result = Tensor(data=out_data, _children=(self,))
+
+        def _backward():
+            grad = result.grad
+            if not keepdims and axis is not None:
+                grad = np.expand_dims(grad, axis)
+            self.grad += grad * mask
+
+        result._backward = _backward
+
+        return result
+
+    def __truediv__(self, other):
+        other = other if isinstance(other, Tensor) else Tensor(other)
+        return self * (other ** -1)
+
+    def __rtruediv__(self, other):
+        return Tensor(other) * (self ** -1)
 
     def backward(self):
 
