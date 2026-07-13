@@ -1,13 +1,13 @@
 import numpy as np
 from engine.tensor import Tensor
-from transformer.self_attention import MultiHeadAttention, causal_mask
+from nn.transformer_block import TransformerBlock
 
 
 np.random.seed(0)
 
-def numerical_grad_check(mha, x_data, mask=None, eps=1e-5, n_checks=20):
+def numerical_grad_check(block, x_data, eps=1e-5, n_checks=20):
     x = Tensor(x_data.copy())
-    out, _ = mha(x, mask=mask)
+    out = block(x)
     loss = out.sum()
     loss.backward()
     analytic_grad = x.grad.copy()
@@ -19,12 +19,10 @@ def numerical_grad_check(mha, x_data, mask=None, eps=1e-5, n_checks=20):
 
         orig = x_data[idx]
         x_data[idx] = orig + eps
-        out_plus, _ = mha(Tensor(x_data.copy()), mask=mask)
-        loss_plus = out_plus.sum().data
+        loss_plus = block(Tensor(x_data.copy())).sum().data
 
         x_data[idx] = orig - eps
-        out_minus, _ = mha(Tensor(x_data.copy()), mask=mask)
-        loss_minus = out_minus.sum().data
+        loss_minus = block(Tensor(x_data.copy())).sum().data
 
         x_data[idx] = orig  # restore
 
@@ -38,13 +36,9 @@ def numerical_grad_check(mha, x_data, mask=None, eps=1e-5, n_checks=20):
 
 
 if __name__ == "__main__":
-    batch, seq_len, d_model, num_heads = 2, 4, 8, 2
+    batch, seq_len, d_model, num_heads, d_ff = 2, 4, 8, 2, 16
     x_data = np.random.randn(batch, seq_len, d_model)
-    mha = MultiHeadAttention(d_model, num_heads)
-    mask = causal_mask(seq_len)
+    block = TransformerBlock(d_model=d_model, num_heads=num_heads, d_ff=d_ff)
 
-    print("=== No mask ===")
-    numerical_grad_check(mha, x_data.copy(), mask=None)
-
-    print("\n=== Causal mask ===")
-    numerical_grad_check(mha, x_data.copy(), mask=mask)
+    print("=== TransformerBlock grad check (input x) ===")
+    numerical_grad_check(block, x_data.copy())

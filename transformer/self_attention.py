@@ -1,6 +1,7 @@
 import math
 import numpy as np
 from engine.tensor import Tensor
+from nn.Module import Module
 
 
 def softmax(x, axis=-1):
@@ -40,7 +41,7 @@ def combine_heads(x):
     return x.reshape(batch, seq_len, num_heads * d_k)
 
 
-class MultiHeadAttention:
+class MultiHeadAttention(Module):
     def __init__(self, d_model, num_heads):
         self.num_heads = num_heads
         self.d_model = d_model
